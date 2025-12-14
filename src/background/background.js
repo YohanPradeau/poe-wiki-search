@@ -1,42 +1,53 @@
-import { redirectFromFandom, redirectFromSearchEngine } from "./redirects.js"
+// background.js (MV3 service worker)
 
-// Any requests beginning with these patterns get intercepted.
-const fandomPattern = "https://pathofexile.fandom.com/wiki/*"
-// These Search Engine patterns are written this way to prevent recursively matching on the redirect destination.
-// Redirects will be generated to include `?q=site:poewiki.net`, 
-// which a naive pattern of `q=*poe*wiki*` will again match (recursively) and continue trying to redirect for (bad).
-
-// Search engine patterns
-const googlePatterns = [
-    "https://*.google.com/search?*q=*poe+*wiki*",
-    "https://*.google.com/search?*q=*poewiki+*",
-    "https://*.google.com/search?*q=*+poewiki*"
-]
-
-const duckduckgoPatterns = [
-    "https://duckduckgo.com/?*q=*poe+*wiki*",
-    "https://duckduckgo.com/?*q=*poewiki+*",
-    "https://duckduckgo.com/?*q=*+poewiki*",
-    "https://*.duckduckgo.com/?*q=*poe+*wiki*",
-    "https://*.duckduckgo.com/?*q=*poewiki+*",
-    "https://*.duckduckgo.com/?*q=*+poewiki*"
-]
-
-// Instruction for the browser to redirect based on pattern.
-// `chrome` used instead of `browser` for compat since Firefox supports
-// both chrome and browser, but chrome(ium) only supports chrome prefix afaik.
-chrome.webRequest.onBeforeRequest.addListener(
-    redirectFromFandom,
-    {
-        urls: [fandomPattern],
+// Define redirect rules dynamically
+const rules = [
+  // Redirect Fandom wiki → poewiki.net
+  {
+    id: 1,
+    priority: 1,
+    action: {
+      type: "redirect",
+      redirect: {
+        transform: { host: "www.poewiki.net" }
+      }
     },
-    ["blocking"],
-)
+    condition: {
+      urlFilter: "https://pathofexile.fandom.com/wiki/*",
+      resourceTypes: ["main_frame"]
+    }
+  },
 
-chrome.webRequest.onBeforeRequest.addListener(
-    redirectFromSearchEngine,
-    {
-        urls: [...googlePatterns, ...duckduckgoPatterns],
+  // Redirect Google searches containing "poe wiki" or "poewiki" → site:poewiki.net
+  {
+    id: 2,
+    priority: 1,
+    action: {
+      type: "redirect",
+      redirect: {
+        regexSubstitution: "https://www.google.com/search?q=site:poewiki.net \\1"
+      }
     },
-    ["blocking"],
-)
+    condition: {
+      regexFilter: "https://.*\\.google\\.com/search\\?q=(?:poe\\+wiki|poewiki\\+|\\+poewiki)(.*)",
+      resourceTypes: ["main_frame"]
+    }
+  }
+];
+
+// On install/update, clear old rules and apply the new ones
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.declarativeNetRequest.updateDynamicRules(
+    {
+      removeRuleIds: rules.map(r => r.id),
+      addRules: rules
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error("Failed to update rules:", chrome.runtime.lastError);
+      } else {
+        console.log("Dynamic redirect rules applied successfully.");
+      }
+    }
+  );
+});
