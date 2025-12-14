@@ -21,8 +21,10 @@
   ],
 
   "host_permissions": [
-    "https://pathofexile.fandom.com/*",
-    "https://*.google.com/*"
+    "*://*.duckduckgo.com/*",
+    "*://duckduckgo.com/*",
+    "*://*.google.com/*",
+    "*://pathofexile.fandom.com/*"
   ],
 
   "action": {

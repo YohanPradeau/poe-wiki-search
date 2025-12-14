@@ -32,6 +32,20 @@ const rules = [
       regexFilter: "https://.*\\.google\\.com/search\\?q=(?:poe\\+wiki|poewiki\\+|\\+poewiki)(.*)",
       resourceTypes: ["main_frame"]
     }
+  },
+  {
+    id: 3,
+    priority: 1,
+    action: {
+      type: "redirect",
+      redirect: {
+        regexSubstitution: "https://duckduckgo.com/?q=site:poewiki.net \\1"
+      }
+    },
+    condition: {
+      regexFilter: "https://duckduckgo\\.com/\\?.*q=(?:poe\\+wiki|poewiki\\+|\\+poewiki)(.*)",
+      resourceTypes: ["main_frame"]
+    }
   }
 ];
 
