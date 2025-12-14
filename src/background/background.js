@@ -1,5 +1,3 @@
-// background.js (MV3 service worker)
-
 // Define redirect rules dynamically
 const rules = [
   // Redirect Fandom wiki → poewiki.net
